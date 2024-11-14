@@ -135,17 +135,17 @@ async fn app_main<'d>(
                         } else {
                             drop(a_side);
                             let mut analog_read = PinDriversAnalogA {
-                                a0_ad: AdcChannelDriver::new(&adc, &mut pinsa.a0_ad, &adc_channel_config)
+                                a0_ad: AdcChannelDriver::new(&adc, &mut pinsa.a0_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
-                                a1_ad: AdcChannelDriver::new(&adc, &mut pinsa.a1_ad, &adc_channel_config)
+                                a1_ad: AdcChannelDriver::new(&adc, &mut pinsa.a1_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
-                                a2_ad: AdcChannelDriver::new(&adc, &mut pinsa.a2_ad, &adc_channel_config)
+                                a2_ad: AdcChannelDriver::new(&adc, &mut pinsa.a2_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
-                                a3_ad: AdcChannelDriver::new(&adc, &mut pinsa.a3_ad, &adc_channel_config)
+                                a3_ad: AdcChannelDriver::new(&adc, &mut pinsa.a3_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
-                                a4_ad: AdcChannelDriver::new(&adc, &mut pinsa.a4_ad, &adc_channel_config)
+                                a4_ad: AdcChannelDriver::new(&adc, &mut pinsa.a4_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
-                                a5_ad: AdcChannelDriver::new(&adc, &mut pinsa.a5_ad, &adc_channel_config)
+                                a5_ad: AdcChannelDriver::new(&adc, &mut pinsa.a5_ad, adc_channel_config)
                                     .change_context(B32Error::Esp32Error)?,
                             };
                             (analog_read.analog_read(&adc, port)
