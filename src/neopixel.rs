@@ -3,7 +3,7 @@ use error_stack::ResultExt;
 use esp_idf_svc::hal::gpio::Gpio8;
 use esp_idf_svc::hal::rmt::config::TransmitConfig;
 use esp_idf_svc::hal::rmt::{
-    FixedLengthSignal, PinState, Pulse, RmtChannel, TxRmtDriver, CHANNEL0,
+    FixedLengthSignal, PinState, Pulse, TxRmtDriver, CHANNEL0,
 };
 use thiserror::Error;
 
