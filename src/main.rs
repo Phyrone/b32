@@ -3,14 +3,14 @@ mod consts;
 mod neopixel;
 mod pins;
 
-use crate::com::{AnalogWritePort, DigitalPort, Request, Response};
+use crate::com::{DigitalPort, Request, Response};
 use crate::neopixel::{Neopixel, Rgb};
 use crate::pins::{ASidePinDrivers, BSidePinDrivers, PinDriversAnalogA, PinDriversDigitalA, PinDriversDigitalB, PinsA, PinsB};
 use error_stack::ResultExt;
 use esp_idf_svc::hal::adc::ADC1;
 use esp_idf_svc::hal::adc::oneshot::config::AdcChannelConfig;
 use esp_idf_svc::hal::adc::oneshot::{AdcChannelDriver, AdcDriver};
-use esp_idf_svc::hal::gpio::{ADCPin, Gpio16, Gpio17, InputOutput, Level, Output, PinDriver, Pull};
+use esp_idf_svc::hal::gpio::{Gpio16, Gpio17};
 use esp_idf_svc::hal::prelude::Peripherals;
 use esp_idf_svc::hal::uart::config::{DataBits, FlowControl};
 use esp_idf_svc::hal::uart::{AsyncUartDriver, UartConfig, UartDriver};
@@ -50,11 +50,11 @@ fn main() -> error_stack::Result<(), B32Error> {
         .change_context(B32Error::Esp32Error)?;
 
     //Analog pins
-    let mut adc = AdcDriver::new(peripherals.adc1).change_context(B32Error::Esp32Error)?;
+    let adc = AdcDriver::new(peripherals.adc1).change_context(B32Error::Esp32Error)?;
     let adc_channel_config = AdcChannelConfig::new();
 
 
-    let mut pins1 = PinsA {
+    let pins1 = PinsA {
         a0_ad: peripherals.pins.gpio2,
         a1_ad: peripherals.pins.gpio3,
         a2_ad: peripherals.pins.gpio4,
@@ -64,7 +64,7 @@ fn main() -> error_stack::Result<(), B32Error> {
         a7_d: peripherals.pins.gpio14,
     };
 
-    let mut pins2 = PinsB {
+    let pins2 = PinsB {
         b0_d: peripherals.pins.gpio23,
         b1_d: peripherals.pins.gpio22,
         b2_d: peripherals.pins.gpio21,
