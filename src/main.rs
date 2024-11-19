@@ -12,12 +12,20 @@ use esp_idf_svc::hal::adc::oneshot::config::AdcChannelConfig;
 use esp_idf_svc::hal::adc::oneshot::{AdcChannelDriver, AdcDriver};
 use esp_idf_svc::hal::gpio::{Gpio16, Gpio17};
 use esp_idf_svc::hal::prelude::Peripherals;
+#[cfg(feature = "rt-embassy")]
+use esp_idf_svc::hal::task::block_on;
 use esp_idf_svc::hal::uart::config::{DataBits, FlowControl};
 use esp_idf_svc::hal::uart::{AsyncUartDriver, UartConfig, UartDriver};
 use esp_idf_svc::hal::units::Hertz;
 use log::{error, warn};
 use thiserror::Error;
+#[cfg(feature = "log")]
 use tracing::{debug, info};
+
+#[cfg(not(any(feature = "rt-tokio", feature = "rt-embassy")))]
+compile_error!("No async runtime selected. Please select one of the following features: rt-tokio, rt-embassy");
+#[cfg(all(feature = "rt-tokio", feature = "rt-embassy"))]
+compile_error!("Multiple async runtimes selected. Please select only one of the following features: rt-tokio, rt-embassy");
 
 #[derive(Debug, Error)]
 pub enum B32Error {
@@ -37,12 +45,14 @@ fn main() -> error_stack::Result<(), B32Error> {
     // Bind the log crate to the ESP Logging facilities
     esp_idf_svc::log::EspLogger::initialize_default();
 
+    #[cfg(feature = "rt-tokio")]
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_time()
         .thread_stack_size(consts::STACK_SIZE)
         .build()
         .change_context(B32Error::CreateRuntime)?;
 
+    #[cfg(feature = "log")]
     info!("Initializing...");
     let peripherals = Peripherals::take().change_context(B32Error::Esp32Error)?;
     let mut led = Neopixel::new(peripherals.pins.gpio8, peripherals.rmt.channel0);
@@ -74,8 +84,8 @@ fn main() -> error_stack::Result<(), B32Error> {
         b6_d: peripherals.pins.gpio15,
         b7_d: peripherals.pins.gpio9,
     };
-
-
+    
+    #[cfg(feature = "log")]
     info!("Opening serial port...");
     let usb_serial_config = UartConfig::new()
         .data_bits(DataBits::DataBits8)
@@ -92,9 +102,13 @@ fn main() -> error_stack::Result<(), B32Error> {
         &usb_serial_config,
     )
         .change_context(B32Error::Esp32Error)?;
-
+    #[cfg(feature = "log")]
     info!("Serial port opened");
-    let result = runtime.block_on(app_main(&mut usb_serial, &mut led, pins1, pins2, adc, &adc_channel_config));
+    let runtime_fn = app_main(&mut usb_serial, &mut led, pins1, pins2, adc, &adc_channel_config);
+    #[cfg(feature = "rt-tokio")]
+    let result = runtime.block_on(runtime_fn);
+    #[cfg(feature = "rt-embassy")]
+    let result = block_on(runtime_fn);
     led.set_color(Rgb::new(64, 0, 0))
         .change_context(B32Error::Esp32Error)?;
     result
@@ -112,6 +126,7 @@ async fn app_main<'d>(
     let mut b_side = BSidePinDrivers::None;
 
     loop {
+        #[cfg(feature = "log")]
         info!("Waiting for instructions...");
         led.set_color(Rgb::new(0, 64, 0))
             .change_context(B32Error::Esp32Error)?;
@@ -120,6 +135,7 @@ async fn app_main<'d>(
             .change_context(B32Error::Esp32Error)?;
         match request {
             Ok(request) => {
+                #[cfg(feature = "log")]
                 debug!("Got request: {:?}", request);
                 match request {
                     Some(Request::InitTest(value)) => {

@@ -17,17 +17,18 @@ opt-level = "s"
 debug = true    # Symbols are nice and they don't increase the size on Flash
 opt-level = "z"
 
-[features]
-default = []
 
-experimental = ["esp-idf-svc/experimental"]
 
 [dependencies]
-tracing = { version = "0.1.40", features = ["log-always"] }
+tracing = { optional = true, version = "0.1.40", features = ["log-always"] }
 esp-idf-svc = { version = "0.49", features = ["critical-section"] }
 
 # Asybchronous runtime
-tokio = { version = "1.41.1", features = ["fs", "net", "rt", "sync", "time","io-util", "tracing"] }
+# Tokio
+tokio = { optional = true, version = "1.41.1", features = ["fs", "net", "rt", "sync", "time", "io-util", "tracing"] }
+
+# Embassy
+embassy-sync = { optional = true, version = "0.6.0", features = [] }
 
 # Error handling
 anyhow = "1.0.93"
@@ -38,3 +39,12 @@ log = "0.4.22"
 [build-dependencies]
 embuild = "0.32.0"
 cc = "=1.1.30" # Necessary until a new version of `esp-idf-sys` is released
+
+[features]
+default = ["log", "rt-tokio"]
+
+log = ["tracing", "embassy-sync?/log"]
+
+experimental = ["esp-idf-svc/experimental"]
+rt-tokio = ["tokio"]
+rt-embassy = ["embassy-sync"]
