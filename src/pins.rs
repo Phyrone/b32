@@ -67,6 +67,7 @@ impl<'p> PinDriversDigitalA<'p> {
                 result |= POS_MASKS[i];
             }
         }
+        let result = result.reverse_bits();
         Ok(result)
     }
     pub fn digital_write(&mut self, value: u8) -> Result<(), EspError> {
@@ -189,6 +190,7 @@ impl<'p> PinDriversDigitalB<'p> {
                 result |= POS_MASKS[i];
             }
         }
+        let result = result.reverse_bits();
         Ok(result)
     }
 
