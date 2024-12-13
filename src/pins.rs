@@ -28,7 +28,6 @@ pub struct PinDriversDigitalA<'p> {
 }
 
 impl<'p> PinDriversDigitalA<'p> {
-    
     pub fn new(pins: &'p mut PinsA) -> Result<Self, EspError> {
         let a0_ad = PinDriver::input_output(&mut pins.a0_ad)?;
         let a1_ad = PinDriver::input_output(&mut pins.a1_ad)?;
@@ -48,7 +47,7 @@ impl<'p> PinDriversDigitalA<'p> {
             a7_d,
         })
     }
-    
+
     pub fn digital_read(&mut self) -> Result<u8, EspError> {
         const POS_MASKS: [u8; 8] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80];
         let bits: [bool; 7] = [
@@ -98,12 +97,14 @@ pub struct PinDriversAnalogA<'p, 'd> {
     pub a3_ad: AdcChannelDriver<'d, Gpio5, &'p AdcDriver<'d, ADC1>>,
     pub a4_ad: AdcChannelDriver<'d, Gpio0, &'p AdcDriver<'d, ADC1>>,
     pub a5_ad: AdcChannelDriver<'d, Gpio1, &'p AdcDriver<'d, ADC1>>,
-
 }
 
 impl<'p, 'd> PinDriversAnalogA<'p, 'd> {
-    
-    pub fn analog_read(&mut self, adc: &'p AdcDriver<'d, ADC1>, port: AnalogReadPort) -> Result<u16, EspError> {
+    pub fn analog_read(
+        &mut self,
+        adc: &'p AdcDriver<'d, ADC1>,
+        port: AnalogReadPort,
+    ) -> Result<u16, EspError> {
         match port {
             AnalogReadPort::Port1 => adc.read(&mut self.a0_ad),
             AnalogReadPort::Port2 => adc.read(&mut self.a1_ad),
@@ -121,7 +122,6 @@ pub enum ASidePinDrivers<'p, 'd> {
     Digital(PinDriversDigitalA<'p>),
     Analog(PinDriversAnalogA<'p, 'd>),
 }
-
 
 pub struct PinsB {
     // Side B
@@ -148,7 +148,6 @@ pub struct PinDriversDigitalB<'p> {
 }
 
 impl<'p> PinDriversDigitalB<'p> {
-    
     pub fn new(pins: &'p mut PinsB) -> Result<Self, EspError> {
         let b0_d = PinDriver::input_output(&mut pins.b0_d)?;
         let b1_d = PinDriver::input_output(&mut pins.b1_d)?;
@@ -170,7 +169,7 @@ impl<'p> PinDriversDigitalB<'p> {
             b7_d,
         })
     }
-    
+
     pub fn digital_read(&mut self) -> Result<u8, EspError> {
         const POS_MASKS: [u8; 8] = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80];
         let bits: [bool; 8] = [

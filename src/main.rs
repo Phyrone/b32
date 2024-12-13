@@ -5,11 +5,14 @@ mod pins;
 
 use crate::com::{DigitalPort, Request, Response};
 use crate::neopixel::{Neopixel, Rgb};
-use crate::pins::{ASidePinDrivers, BSidePinDrivers, PinDriversAnalogA, PinDriversDigitalA, PinDriversDigitalB, PinsA, PinsB};
+use crate::pins::{
+    ASidePinDrivers, BSidePinDrivers, PinDriversAnalogA, PinDriversDigitalA, PinDriversDigitalB,
+    PinsA, PinsB,
+};
 use error_stack::{Result, ResultExt};
-use esp_idf_svc::hal::adc::ADC1;
 use esp_idf_svc::hal::adc::oneshot::config::AdcChannelConfig;
 use esp_idf_svc::hal::adc::oneshot::{AdcChannelDriver, AdcDriver};
+use esp_idf_svc::hal::adc::ADC1;
 use esp_idf_svc::hal::gpio::{Gpio16, Gpio17};
 use esp_idf_svc::hal::prelude::Peripherals;
 #[cfg(feature = "rt-embassy")]
@@ -23,7 +26,9 @@ use thiserror::Error;
 use tracing::{debug, info};
 
 #[cfg(not(any(feature = "rt-tokio", feature = "rt-embassy")))]
-compile_error!("No async runtime selected. Please select one of the following features: rt-tokio, rt-embassy");
+compile_error!(
+    "No async runtime selected. Please select one of the following features: rt-tokio, rt-embassy"
+);
 #[cfg(all(feature = "rt-tokio", feature = "rt-embassy"))]
 compile_error!("Multiple async runtimes selected. Please select only one of the following features: rt-tokio, rt-embassy");
 
@@ -63,7 +68,6 @@ fn main() -> error_stack::Result<(), B32Error> {
     let adc = AdcDriver::new(peripherals.adc1).change_context(B32Error::Esp32Error)?;
     let adc_channel_config = AdcChannelConfig::new();
 
-
     let pins1 = PinsA {
         a0_ad: peripherals.pins.gpio2,
         a1_ad: peripherals.pins.gpio3,
@@ -84,7 +88,7 @@ fn main() -> error_stack::Result<(), B32Error> {
         b6_d: peripherals.pins.gpio15,
         b7_d: peripherals.pins.gpio9,
     };
-    
+
     #[cfg(feature = "log")]
     info!("Opening serial port...");
     let usb_serial_config = UartConfig::new()
@@ -101,19 +105,26 @@ fn main() -> error_stack::Result<(), B32Error> {
         Option::<Gpio17>::None,
         &usb_serial_config,
     )
-        .change_context(B32Error::Esp32Error)?;
+    .change_context(B32Error::Esp32Error)?;
     #[cfg(feature = "log")]
     info!("Serial port opened");
-    let runtime_fn = app_main(&mut usb_serial, &mut led, pins1, pins2, adc, &adc_channel_config);
+    let runtime_fn = app_main(
+        &mut usb_serial,
+        &mut led,
+        pins1,
+        pins2,
+        adc,
+        &adc_channel_config,
+    );
     #[cfg(feature = "rt-tokio")]
     let result = runtime.block_on(runtime_fn);
     #[cfg(feature = "rt-embassy")]
     let result = block_on(runtime_fn);
-    
+
     if let Result::Err(err) = &result {
         #[cfg(feature = "log")]
         error!("Main loop failed: {err:#?}");
-    }else { 
+    } else {
         #[cfg(feature = "log")]
         warn!("Main loop returned without error, that's weird");
     }
@@ -153,30 +164,61 @@ async fn app_main<'d>(
                             .change_context(B32Error::Esp32Error)?;
                     }
                     Some(Request::AnalogRead(port)) => {
-                        let (output, analog_read) = if let ASidePinDrivers::Analog(mut analog_read) = a_side {
-                            (analog_read.analog_read(&adc, port)
-                                 .change_context(B32Error::Esp32Error)?
-                             , ASidePinDrivers::Analog(analog_read))
-                        } else {
-                            drop(a_side);
-                            let mut analog_read = PinDriversAnalogA {
-                                a0_ad: AdcChannelDriver::new(&adc, &mut pinsa.a0_ad, adc_channel_config)
+                        let (output, analog_read) =
+                            if let ASidePinDrivers::Analog(mut analog_read) = a_side {
+                                (
+                                    analog_read
+                                        .analog_read(&adc, port)
+                                        .change_context(B32Error::Esp32Error)?,
+                                    ASidePinDrivers::Analog(analog_read),
+                                )
+                            } else {
+                                drop(a_side);
+                                let mut analog_read = PinDriversAnalogA {
+                                    a0_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a0_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
-                                a1_ad: AdcChannelDriver::new(&adc, &mut pinsa.a1_ad, adc_channel_config)
+                                    a1_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a1_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
-                                a2_ad: AdcChannelDriver::new(&adc, &mut pinsa.a2_ad, adc_channel_config)
+                                    a2_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a2_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
-                                a3_ad: AdcChannelDriver::new(&adc, &mut pinsa.a3_ad, adc_channel_config)
+                                    a3_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a3_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
-                                a4_ad: AdcChannelDriver::new(&adc, &mut pinsa.a4_ad, adc_channel_config)
+                                    a4_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a4_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
-                                a5_ad: AdcChannelDriver::new(&adc, &mut pinsa.a5_ad, adc_channel_config)
+                                    a5_ad: AdcChannelDriver::new(
+                                        &adc,
+                                        &mut pinsa.a5_ad,
+                                        adc_channel_config,
+                                    )
                                     .change_context(B32Error::Esp32Error)?,
+                                };
+                                (
+                                    analog_read
+                                        .analog_read(&adc, port)
+                                        .change_context(B32Error::Esp32Error)?,
+                                    ASidePinDrivers::Analog(analog_read),
+                                )
                             };
-                            (analog_read.analog_read(&adc, port)
-                                 .change_context(B32Error::Esp32Error)?
-                             , ASidePinDrivers::Analog(analog_read))
-                        };
                         a_side = analog_read;
                         com::write_response(usb_serial, Response::AnalogValue(output))
                             .await
@@ -185,35 +227,49 @@ async fn app_main<'d>(
                     Some(Request::DigitalRead(port)) => {
                         let output = match port {
                             DigitalPort::Port1 => {
-                                let (output, digital_read) = if let ASidePinDrivers::Digital(mut digital_read) = a_side {
-                                    (digital_read.digital_read()
-                                         .change_context(B32Error::Esp32Error)?
-                                     , digital_read)
-                                } else {
-                                    drop(a_side);
-                                    let mut digital_read = PinDriversDigitalA::new(&mut pinsa)
-                                        .change_context(B32Error::Esp32Error)?;
-                                    (digital_read.digital_read()
-                                         .change_context(B32Error::Esp32Error)?
-                                     , digital_read)
-                                };
+                                let (output, digital_read) =
+                                    if let ASidePinDrivers::Digital(mut digital_read) = a_side {
+                                        (
+                                            digital_read
+                                                .digital_read()
+                                                .change_context(B32Error::Esp32Error)?,
+                                            digital_read,
+                                        )
+                                    } else {
+                                        drop(a_side);
+                                        let mut digital_read = PinDriversDigitalA::new(&mut pinsa)
+                                            .change_context(B32Error::Esp32Error)?;
+                                        (
+                                            digital_read
+                                                .digital_read()
+                                                .change_context(B32Error::Esp32Error)?,
+                                            digital_read,
+                                        )
+                                    };
 
                                 a_side = ASidePinDrivers::Digital(digital_read);
                                 output
                             }
                             DigitalPort::Port2 => {
-                                let (output, digital_read) = if let BSidePinDrivers::Digital(mut digital_read) = b_side {
-                                    (digital_read.digital_read()
-                                         .change_context(B32Error::Esp32Error)?
-                                     , digital_read)
-                                } else {
-                                    drop(b_side);
-                                    let mut digital_read = PinDriversDigitalB::new(&mut pinsb)
-                                        .change_context(B32Error::Esp32Error)?;
-                                    (digital_read.digital_read()
-                                         .change_context(B32Error::Esp32Error)?
-                                     , digital_read)
-                                };
+                                let (output, digital_read) =
+                                    if let BSidePinDrivers::Digital(mut digital_read) = b_side {
+                                        (
+                                            digital_read
+                                                .digital_read()
+                                                .change_context(B32Error::Esp32Error)?,
+                                            digital_read,
+                                        )
+                                    } else {
+                                        drop(b_side);
+                                        let mut digital_read = PinDriversDigitalB::new(&mut pinsb)
+                                            .change_context(B32Error::Esp32Error)?;
+                                        (
+                                            digital_read
+                                                .digital_read()
+                                                .change_context(B32Error::Esp32Error)?,
+                                            digital_read,
+                                        )
+                                    };
 
                                 b_side = BSidePinDrivers::Digital(digital_read);
                                 output
@@ -226,29 +282,35 @@ async fn app_main<'d>(
                     Some(Request::DigitalWrite(port, value)) => {
                         match port {
                             DigitalPort::Port1 => {
-                                a_side = if let ASidePinDrivers::Digital(mut digital_write) = a_side {
-                                    digital_write.digital_write(value)
+                                a_side = if let ASidePinDrivers::Digital(mut digital_write) = a_side
+                                {
+                                    digital_write
+                                        .digital_write(value)
                                         .change_context(B32Error::Esp32Error)?;
                                     ASidePinDrivers::Digital(digital_write)
                                 } else {
                                     drop(a_side);
                                     let mut digital_write = PinDriversDigitalA::new(&mut pinsa)
                                         .change_context(B32Error::Esp32Error)?;
-                                    digital_write.digital_write(value)
+                                    digital_write
+                                        .digital_write(value)
                                         .change_context(B32Error::Esp32Error)?;
                                     ASidePinDrivers::Digital(digital_write)
                                 }
                             }
                             DigitalPort::Port2 => {
-                                b_side = if let BSidePinDrivers::Digital(mut digital_write) = b_side {
-                                    digital_write.digital_write(value)
+                                b_side = if let BSidePinDrivers::Digital(mut digital_write) = b_side
+                                {
+                                    digital_write
+                                        .digital_write(value)
                                         .change_context(B32Error::Esp32Error)?;
                                     BSidePinDrivers::Digital(digital_write)
                                 } else {
                                     drop(b_side);
                                     let mut digital_write = PinDriversDigitalB::new(&mut pinsb)
                                         .change_context(B32Error::Esp32Error)?;
-                                    digital_write.digital_write(value)
+                                    digital_write
+                                        .digital_write(value)
                                         .change_context(B32Error::Esp32Error)?;
                                     BSidePinDrivers::Digital(digital_write)
                                 }
