@@ -6,7 +6,7 @@ mod pins;
 use crate::com::{DigitalPort, Request, Response};
 use crate::neopixel::{Neopixel, Rgb};
 use crate::pins::{ASidePinDrivers, BSidePinDrivers, PinDriversAnalogA, PinDriversDigitalA, PinDriversDigitalB, PinsA, PinsB};
-use error_stack::ResultExt;
+use error_stack::{Result, ResultExt};
 use esp_idf_svc::hal::adc::ADC1;
 use esp_idf_svc::hal::adc::oneshot::config::AdcChannelConfig;
 use esp_idf_svc::hal::adc::oneshot::{AdcChannelDriver, AdcDriver};
@@ -109,8 +109,15 @@ fn main() -> error_stack::Result<(), B32Error> {
     let result = runtime.block_on(runtime_fn);
     #[cfg(feature = "rt-embassy")]
     let result = block_on(runtime_fn);
-    #[cfg(feature = "log")]
-    error!("Main loop exited: {result:#?}");
+    
+    if let Result::Err(err) = &result {
+        #[cfg(feature = "log")]
+        error!("Main loop failed: {err:#?}");
+    }else { 
+        #[cfg(feature = "log")]
+        warn!("Main loop returned without error, that's weird");
+    }
+
     led.set_color(Rgb::new(64, 0, 0))
         .change_context(B32Error::Esp32Error)?;
     result
