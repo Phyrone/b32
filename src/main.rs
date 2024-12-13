@@ -109,6 +109,8 @@ fn main() -> error_stack::Result<(), B32Error> {
     let result = runtime.block_on(runtime_fn);
     #[cfg(feature = "rt-embassy")]
     let result = block_on(runtime_fn);
+    #[cfg(feature = "log")]
+    error!("Main loop exited: {result:#?}");
     led.set_color(Rgb::new(64, 0, 0))
         .change_context(B32Error::Esp32Error)?;
     result
