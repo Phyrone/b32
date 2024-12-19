@@ -38,7 +38,7 @@ log = "0.4.22"
 
 [build-dependencies]
 embuild = "0.32.0"
-cc = "=1.1.30" # Necessary until a new version of `esp-idf-sys` is released
+cc = "=1.2.5" # Necessary until a new version of `esp-idf-sys` is released
 
 [features]
 default = ["rt-embassy"]
