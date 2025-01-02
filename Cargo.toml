@@ -37,7 +37,7 @@ error-stack = { version = "0.5.0", features = ["std", "anyhow", "backtrace"] }
 log = "0.4.22"
 
 [build-dependencies]
-embuild = "0.32.0"
+embuild = "0.33.0"
 cc = "=1.1.30" # Necessary until a new version of `esp-idf-sys` is released
 
 [features]
