@@ -33,7 +33,7 @@ embassy-sync = { optional = true, version = "0.6.1", features = [] }
 # Error handling
 anyhow = "1.0.94"
 thiserror = "2.0.6"
-error-stack = { version = "0.5.0", features = ["std", "anyhow", "backtrace"] }
+error-stack = { version = "0.8.0", features = ["std", "anyhow", "backtrace"] }
 log = "0.4.22"
 
 [build-dependencies]
